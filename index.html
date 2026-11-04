@@ -1552,6 +1552,12 @@ renderPage(STATE.page);
   }
 
   function render_triptease(){
+    var sel = (typeof PRIMARY!=='undefined' && PRIMARY && !PRIMARY.custom && PRIMARY.month) || ''; sel = String(sel).replace(/^(\d{4})(\d{2})$/,'$1-$2');
+    if(sel !== STATE_TT.lastSel){ STATE_TT.lastSel = sel; STATE_TT.month = REPORT_MONTHS.indexOf(sel)>=0 ? sel : null; }
+    if(!STATE_TT.month){
+      var sl = (typeof MONTH_LABELS!=='undefined' && MONTH_LABELS[sel]) || (/^\d{4}-\d{2}$/.test(sel) ? lab(sel) : 'this period');
+      return '<div class="placeholder-card"><h3>No Triptease report for '+esc(sl)+'</h3><p>Triptease reports are monthly. Choose one of these months in the month picker: '+REPORT_MONTHS.slice().reverse().map(lab).join(', ')+'.</p></div>';
+    }
     var m = STATE_TT.month, r = TT.months[m]||{}, pm = prevOf(m), p = pm ? TT.months[pm] : {};
     var s = r.summary||{}, ps = (p&&p.summary)||{};
     var h = '<div class="tt-top"><div class="page-desc" style="margin:0">Paid media run by Triptease (Metasearch on Google Hotel Ads, Paid Search, Retargeting) and rate parity against the OTAs. Monthly figures'+(pm?', compared with '+lab(pm):'')+'.'+(START?' <b>Triptease reporting starts 1 '+lab(START)+'.</b>':'')+'</div>'+
@@ -1641,8 +1647,8 @@ renderPage(STATE.page);
   TITLES.triptease = 'Triptease & Rate Parity';
   if(typeof PAGE_DESC==='object' && PAGE_DESC) PAGE_DESC.triptease = 'Triptease paid media and rate parity, monthly.';
   RENDERERS.triptease = render_triptease;
-  window.TT_SET_MONTH = function(x){ if(TT.months[x]) STATE_TT.month = x; };
-  document.addEventListener('change', function(e){ if(e.target && e.target.id==='ttMonth'){ STATE_TT.month = e.target.value; renderPage('triptease'); } });
+  window.TT_SET_MONTH = function(x){ if(TT.months[x]){ STATE_TT.month = x; STATE_TT.lastSel = String((typeof PRIMARY!=='undefined' && PRIMARY && !PRIMARY.custom && PRIMARY.month) || '').replace(/^(\d{4})(\d{2})$/,'$1-$2'); } };
+  document.addEventListener('change', function(e){ if(e.target && e.target.id==='ttMonth'){ var ds=document.getElementById('dateSelect'), v=e.target.value, v2=v.replace('-',''), hit=ds && Array.prototype.filter.call(ds.options,function(o){ return o.value===v || o.value===v2; })[0]; if(hit){ ds.value=hit.value; ds.dispatchEvent(new Event('change')); } else { STATE_TT.month = e.target.value; STATE_TT.lastSel = String((typeof PRIMARY!=='undefined' && PRIMARY && !PRIMARY.custom && PRIMARY.month) || '').replace(/^(\d{4})(\d{2})$/,'$1-$2'); renderPage('triptease'); } } });
   buildNav();
   if(typeof setActiveNav==='function') setActiveNav(STATE.page);
 })();
